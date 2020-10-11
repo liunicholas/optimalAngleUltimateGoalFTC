@@ -3,6 +3,7 @@ from matplotlib import pyplot
 from numpy import *
 from multiprocessing import Pool
 from sympy import *
+from math import *
 #ALL UNITS ARE INCHES AND SECONDS AND DEGREES
 #shooter height
 shooterY = 13.5
@@ -12,16 +13,16 @@ legalX = 11.0*12
 #shooter max velocity
 shooterMaxV = 345.575
 #shooting location
-shootDistMax = 11
-shootDistMin = 6
+shootDistMax = 11*12
+shootDistMin = 6*12
 #measurements of goal
 goalMax = 38.625
 goalMin = 33.125
 #angles to test
-angleMax = 90
-angleMin = 0
+angleMax = 60
+angleMin = 20
 #increase this value for more precise calculations but longer run time
-p = 1.0
+p = 3.0
 
 def getAngles(precision):
     testAngles = []
@@ -40,23 +41,35 @@ def getDistances(precision):
 def getVelocity(angle, distance):
     #two possible velocities from height
     v = Symbol('v')
-    vVal1 = solveset(Eq((goalMax-shooterY),(math.sin(angle*math.pi/360.0)*v*(distance/(math.cos(angle*math.pi/360.0))))-(0.5*9.8*(distance/(math.cos(angle*math.pi/360.0)))**2)), v)
-    vVal2 = solveset(Eq((goalMin-shooterY),(math.sin(angle*math.pi/360.0)*v*(distance/(math.cos(angle*math.pi/360.0))))-(0.5*9.8*(distance/(math.cos(angle*math.pi/360.0)))**2)), v)
+    # t = (distance/(math.cos(math.radians(angle))*v))
+    vVal1 = solveset(Eq((goalMax-shooterY),(math.sin(math.radians(angle))*v*(distance/(math.cos(math.radians(angle))*v)))-(0.5*32.1522*((distance/(math.cos(math.radians(angle))*v))**2))), v)
+    vVal2 = solveset(Eq((goalMin-shooterY),(math.sin(math.radians(angle))*v*(distance/(math.cos(math.radians(angle))*v)))-(0.5*32.1522*((distance/(math.cos(math.radians(angle))*v))**2))), v)
 
+    # print(vVal1,vVal2)
     return vVal1, vVal2
 
 def checkValidV(v, angle):
+    if not v:
+        return False
     if v <= shooterMaxV:
-        timeMaxHeight = v*sin(angle*math.pi/360.0)/9.8
-        maxHeight = (math.sin(angle*math.pi/360.0)*v*timeMaxHeight)-(0.5*9.8*timeMaxHeight**2)
+        # print(f"valid velocity: {v}")
+        # print(f"angle: {angle}")
+        timeMaxHeight = v*math.sin(math.radians(angle))/32.1522
+        # print(timeMaxHeight)
+        maxHeight = (math.sin(math.radians(angle))*v*timeMaxHeight)-(0.5*32.1522*timeMaxHeight**2)
+        # print(maxHeight)
         if maxHeight <= legalY:
-            maxDistance = timeMaxHeight*(math.cos(angle*math.pi/360.0))*v
+            # print("valid height")
+            maxDistance = timeMaxHeight*(math.cos(math.radians(angle)))*v
+            # print(maxDistance)
             if maxDistance <= legalX:
+                # print("valid distance")
                 return True
 
     return False
 
 def getPercentHit(vars):
+    print("trying")
     angle = vars[0]
     distances = vars[1]
 
@@ -64,9 +77,31 @@ def getPercentHit(vars):
     for i in range(len(distances)):
         v1,v2 = getVelocity(angle, distances[i])
         if len(v1) != 0:
-            IN1 = checkValidV(v1[0], angle)
-        if len(v1) != 0:
-            IN2 = checkValidV(v2[0], angle)
+            v1=list(v1)
+            for item in v1:
+                try:
+                    if item >= 0:
+                        v = item
+                        IN1 = checkValidV(v, angle)
+                except:
+                    v = None
+                    print('Complex number encountered, moving on...')
+                # if type(item) is not complex:
+                    # if item >= 0:
+                        # v = item
+        if len(v2) != 0:
+            v2=list(v2)
+            for item in v2:
+                try:
+                    if item >= 0:
+                        v = item
+                        IN2 = checkValidV(v, angle)
+                except:
+                    v = None
+                    print('Complex number encountered, moving on...')
+                # if type(item) is not complex:
+                #     if item >= 0:
+                #         v = item
         if IN1 or IN2:
             totalIn += 1
 
@@ -77,8 +112,8 @@ def displayResults(testAngles, percentInResults):
     fig = pyplot.figure("Percent In vs Angle")
     fig.tight_layout()
     plt = fig.add_subplot(111)
-    plt.set_facecolor('b')
-    plt.scatter(testAngles, percentInResults, c='yellow', marker='s', alpha=0.5)
+    plt.set_facecolor('black')
+    plt.scatter(testAngles, percentInResults, c='yellow', marker='.', alpha=0.5)
     pyplot.subplots_adjust(hspace = 0.4)
     pyplot.show()
 
