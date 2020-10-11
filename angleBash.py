@@ -57,23 +57,27 @@ def checkValidV(v, angle, distance):
     print(f"valid velocity: {v}")
     print(f"angle: {angle}")
     print(f"distance: {distance}")
-    if v <= shooterMaxV:
-        timeMaxHeight = v*sin(radians(angle))/32.1522
-        # print(timeMaxHeight)
-        maxHeight = (sin(radians(angle))*v*timeMaxHeight)-(0.5*32.1522*timeMaxHeight**2)
-        print("max height ", maxHeight)
-        if maxHeight <= legalY:
-            # print("valid height")
-            t = Symbol('t')
-            time = solveset(Eq((-1*shooterY),(sin(radians(angle))*v*t)-(0.5*32.1522*(t**2))), t)
-            time = list(time)
-            maxDistance = abs(time[1])*(cos(radians(angle)))*v
-            print("max distance ", maxDistance)
-            if maxDistance <= legalX:
-                print("valid distance")
-                return True
+    try:
+        if v <= shooterMaxV:
+            timeMaxHeight = v*sin(radians(angle))/32.1522
+            # print(timeMaxHeight)
+            maxHeight = (sin(radians(angle))*v*timeMaxHeight)-(0.5*32.1522*timeMaxHeight**2)
+            print("max height ", maxHeight)
+            if maxHeight <= legalY:
+                # print("valid height")
+                t = Symbol('t')
+                time = solveset(Eq((-1*shooterY),(sin(radians(angle))*v*t)-(0.5*32.1522*(t**2))), t)
+                time = list(time)
+                maxDistance = abs(time[1])*(cos(radians(angle)))*v
+                print("max distance ", maxDistance)
+                if maxDistance <= legalX:
+                    print("valid distance")
+                    return True
 
-    return False
+        return False
+
+    except:
+        return False
 
 def getPercentHit(vars):
     # print("trying")
