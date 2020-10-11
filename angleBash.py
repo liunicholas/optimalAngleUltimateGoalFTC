@@ -2,8 +2,7 @@
 from matplotlib import pyplot
 from numpy import *
 from multiprocessing import Pool
-from sympy.solvers import solveset
-from sympy import Symbol
+from sympy import *
 #ALL UNITS ARE INCHES AND SECONDS AND DEGREES
 #shooter height
 shooterY = 13.5
@@ -26,14 +25,14 @@ p = 1.0
 
 def getAngles(precision):
     testAngles = []
-    for angle in range(angleMin,angleMax,5/p):
+    for angle in arange(angleMin,angleMax+0.1,5/p):
         testAngles.append(angle)
 
     return testAngles
 
 def getDistances(precision):
     testDistances = []
-    for distance in range(shootDistMin, shootDistMax, 1/p):
+    for distance in arange(shootDistMin, shootDistMax+0.1, 1/p):
         testDistances.append(distance)
 
     return testDistances
@@ -61,15 +60,17 @@ def getPercentHit(vars):
     angle = vars[0]
     distances = vars[1]
 
-    in = 0.0
+    totalIn = 0.0
     for i in range(len(distances)):
         v1,v2 = getVelocity(angle, distances[i])
-        IN1 = checkValidV(v1, angle)
-        IN2 = checkValidV(v2, angle)
+        if len(v1) != 0:
+            IN1 = checkValidV(v1[0], angle)
+        if len(v1) != 0:
+            IN2 = checkValidV(v2[0], angle)
         if IN1 or IN2:
-            in += 1
+            totalIn += 1
 
-    percentIn = in/i*100
+    percentIn = totalIn/i*100
     return percentIn
 
 def displayResults(testAngles, percentInResults):
@@ -89,8 +90,9 @@ def main():
 
     vars = []
     for x in range(len(testAngles)):
-        vars.append([testAngles[x],testDistances)
+        vars.append([testAngles[x],testDistances])
 
+    print(vars)
     #CHANGE PROCESSES TO HOWEVER MANY CORES U HAVE
     with Pool(processes=4, maxtasksperchild = 1) as pool:
             percentInResults = pool.map(getPercentHit, vars)
